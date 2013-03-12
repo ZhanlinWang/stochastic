@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+import argparse
+import json
+import logging
+import os
+
+from flask import abort, Flask, jsonify, request
+import verify
+
+from stochastic import generate
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--debug', action='store_true')
+args = parser.parse_args()
+
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+app = Flask(__name__)
+
+def args_to_dict():
+    args = dict()
+
+    for key in request.args:
+        args[key.replace('-', '_')] = request.args[key]
+
+    return args
+
+class RequestValidator(verify.Validator):
+
+    rows = verify.IntField(required=False, default=10, coerce=True)
+    cols = verify.IntField(required=False, default=1, coerce=True)
+
+    seed = verify.IntField(required=False, coerce=True)
+    data_type = verify.StringField(required=False)
+    min_value = verify.FloatField(required=False, coerce=True)
+    max_value = verify.FloatField(required=False, coerce=True)
+    page_size = verify.IntField(required=False, coerce=True)
+    page = verify.IntField(required=False, coerce=True)
+
+@app.route('/')
+def index():
+    '''Extract a url from the GET request, retrieve it, and return JSON.'''
+
+    args = RequestValidator.process(args_to_dict())
+
+    data_type = int if args.get('data_type', 'int') == 'int' else float
+
+    data = list(generate(args['rows'], args['cols'],
+        seed=args.get('seed'),
+        data_type=data_type,
+        min_value=args.get('min_value'),
+        max_value=args.get('max_value'),
+        page_size=args.get('page_size'),
+        page=args.get('page')))
+
+    return jsonify({
+        'data' : data
+    })
+
+port = int(os.environ.get('PORT', 8000))
+app.run(debug=args.debug, host='0.0.0.0', port=port)

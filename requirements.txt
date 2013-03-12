@@ -1,0 +1,2 @@
+Flask==0.9
+https://github.com/generictjohnson/verify/archive/master.tar.gz

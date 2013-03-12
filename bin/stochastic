@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import argparse
+import logging
+
+from stochastic import generate
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--debug', action='store_true')
+
+parser.add_argument('rows', type=int)
+parser.add_argument('cols', type=int)
+parser.add_argument('--seed', type=int)
+parser.add_argument('--data-type', choices=('int', 'float'), default='int')
+parser.add_argument('--min-value', type=float)
+parser.add_argument('--max-value', type=float)
+parser.add_argument('--page-size', type=int)
+parser.add_argument('--page', type=int)
+
+args = parser.parse_args()
+
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+data_type = int if args.data_type == 'int' else float
+
+for row in generate(args.rows, args.cols,
+        seed=args.seed,
+        data_type=data_type,
+        min_value=args.min_value,
+        max_value=args.max_value,
+        page_size=args.page_size,
+        page=args.page):
+    print ' '.join(str(x) for x in row)
